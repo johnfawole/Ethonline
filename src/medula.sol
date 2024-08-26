@@ -10,6 +10,7 @@
     error OnlyForCreators();
     error OnlyForAudience();
     error OnlyTheOwner();
+    error LessThanPrice();
 
     enum ProductType {
         video,
@@ -86,14 +87,18 @@
         Product memory item = productMap[_itemId];
     }
 
-    function buyProduct(uint256 _itemId) public {
+    function buyProduct(uint256 _itemId, uint256 price) public {
         if(msg.sender = audience) {
             revert OnlyForAudience();
         }
 
+        if(msg.value < price) {
+            revert LessThanPrice();
+        }
+
         Product memory item = productMap[_itemId];
 
-        (bool success, ) = item.creator.call{value: msg.value}("");
+        (bool success, ) = item.creator.call{value: price}("");
         require(success, "error - failed transaction");
         
     }
