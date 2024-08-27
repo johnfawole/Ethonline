@@ -3,9 +3,9 @@
  pragma solidity 0.8.24;
 
   contract Medula {
-    address private payable creator;
-    address private payable audience;
-    address private payable owner;
+    address public creator;
+    address public audience;
+    address  private owner;
 
     error OnlyForCreators();
     error OnlyForAudience();
@@ -18,77 +18,84 @@
         writing,
         design
     }
-
+//@dev I referenced "ProductType type" and got an error; later figured it should be productType
     struct Product {
-        ProductType type;
+        ProductType productType;
         string creator;
         string name; 
         string description;
         bool live;
     }
 
-    mapping (address => uint) private creatorBalance;
-    mapping (address => uint) private audienceBalance;
+    mapping (address => uint256[]) private creatorMap;
+    mapping (address => uint256[]) private audienceMap;
     mapping (address => uint) private ownerMapping;
     mapping (uint256 => Product) public productMap;
 
     uint private productAdd;
 
-    constructor() public {
-        owner = msg.sender;
+    constructor() {
+        owner == msg.sender;
     }
 
+    function setCreator(address _creator) public {
+      creator = _creator;
+    }
+
+    function setAudience(address _audience) public {
+        audience = _audience;
+      }
+
     function addProduct (
-        if(msg.sender = creator) {
-            revert OnlyForCreators();
-        }
-        ProductType _type,
+        ProductType _productType,
         string memory _creator,
         string memory _name,
         string memory _description
     ) public {
-
+        if(msg.sender != creator) {
+            revert OnlyForCreators();
+        }
          productMap[productAdd] = Product({
-            type: _type;
-            creator: _creator;
-            name: _name;
+            productType: _productType,
+            creator: _creator,
+            name: _name,
             description: _description,
             live: true
-         })
+         });
 
          productAdd++;
          
-         creatorBalance[msg.sender].push(productAdd);
+         creatorMap[msg.sender].push(productAdd);
 
     }
 
     function getAllProducts() public view returns (uint256[] memory) {
-        if(msg.sender = audience) {
+        if(msg.sender != audience) {
             revert OnlyForAudience();
         }
         uint256[] memory everyProducts = new uint256[](productAdd);
 
         for (uint256 i = 1; i <= productAdd; i++) {
-            everyProducts[i - 1] = i
+            everyProducts[i - 1] = i;
         }
 
          return everyProducts;
     }
 
     function getAProductParticulars(uint256 _itemId) public view returns (
-        if(msg.sender = audience) {
-            revert OnlyForAudience();
-        }
-        ProductType _type,
+        ProductType _productType,
         string memory _creator,
         string memory _name,
         string memory _description
     ) {
-        Product memory item = productMap[_itemId];
+        if(msg.sender != audience) {
+            revert OnlyForAudience();
+        }
+        productMap[_itemId];
     }
 
-    function buyProduct(uint256 _itemId, uint256 price) public {
-        if(msg.sender = audience) {
+    function buyProduct(uint256 _itemId, uint256 price, address payable _creator) public payable {
+        if(msg.sender != audience) {
             revert OnlyForAudience();
         }
 
@@ -96,15 +103,15 @@
             revert LessThanPrice();
         }
 
-        Product memory item = productMap[_itemId];
+        // Product memory item = productMap[_itemId];
 
-        (bool success, ) = item.creator.call{value: price}("");
+        (bool success, ) = _creator.call{value: price}("");
         require(success, "error - failed transaction");
         
     }
 
-    function removeProduct(uint256 _itemId) public {
-        if(msg.sender = owner) {
+    function removeProduct(uint256 _itemId) public view {
+        if(msg.sender != owner) {
             revert OnlyTheOwner();
         }
         Product memory item = productMap[_itemId];
@@ -113,21 +120,19 @@
     }
 
     function removeCreator(address _creator) public {
-        if(msg.sender = owner) {
+        if(msg.sender != owner) {
             revert OnlyTheOwner();
         }
-        uint256[] storage creatorItemId = creatorMap[_creator];
 
-        delete creatorItemId[_creator];
+        delete creatorMap[_creator];
     }
 
     function removeAudience(address _audience) public {
-        if(msg.sender = owner) {
+        if(msg.sender != owner) {
             revert OnlyTheOwner();
         }
-        uint256[] storage audienceItemId = audienceMap[_audience];
 
-        delete audienceItemId[_audience];
+        delete audienceMap[_audience];
     }
 
 
